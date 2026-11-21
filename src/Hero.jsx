@@ -45,8 +45,7 @@ export default function Hero() {
         <svg className="skyline" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true" dangerouslySetInnerHTML={{ __html: skyline }} />
         {phase === 'app' && <Me />}
         <div className="hero-text">
-          <p className="kicker">Brasil · Rio de Janeiro</p>
-          <h1>Rio<span>11 días de sol, samba e saudade</span></h1>
+          <h1>Rio</h1>
           {phase === 'app' && <TripChip />}
         </div>
       </header>

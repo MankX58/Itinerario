@@ -20,7 +20,7 @@ export default function Panorama() {
         <div className="stat" style={{ '--c': '#2a9d4b' }}><b>{total ? Math.round((done / total) * 100) : 0}<small>%</small></b><span>ya vividos</span><Ring pct={total ? done / total : 0} size={44} /></div>
         <div className="stat" style={{ '--c': '#f15bb5' }}><b>{perDay.filter((l) => !l.length).length}</b><span>días aún en blanco</span></div>
       </div>
-      <div className="panel"><h3>¿Cómo se reparte el viaje?</h3><p className="hint">Horas planeadas por día. Toca una columna para ir a ese día.</p>
+      <div className="panel"><h3>¿Cómo se reparte el viaje?</h3>
         <div className="cols">
           {perDay.map((list, i) => (
             <button key={i} className="col" onClick={() => goDay(i + 1)} title={`Ver día ${i + 1}`}>
@@ -36,7 +36,7 @@ export default function Panorama() {
         </div>
         <div className="legend">{Object.values(CATS).map((c) => <span key={c.label}><i style={{ background: c.color }}></i>{c.emoji} {c.label}</span>)}</div>
       </div>
-      <div className="panel"><h3>Nuestro estilo de viaje</h3><p className="hint">Tiempo total por tipo de plan.</p>
+      <div className="panel"><h3>Nuestro estilo de viaje</h3>
         {byCat.map(([k, m]) => (
           <div className="hbar" key={k}><span>{CATS[k].emoji} {CATS[k].label}</span><div><i style={{ width: `${(m / maxCat) * 100}%`, background: CATS[k].color }}></i></div><b>{m ? fmtDur(m) : '—'}</b></div>
         ))}

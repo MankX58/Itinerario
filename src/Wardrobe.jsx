@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useFlip } from './flip.js';
 import { GARMENTS, COLORS, PATTERNS, DESIGNS, SLOTS, SKINS, HAIRS, thumbSVG, figureSVG, garmentById, slotOf } from './wardrobe.js';
-import { DAYS, actsOf, dayDate, fmtDate } from './lib.js';
+import { DAYS, dayDate, fmtDate } from './lib.js';
 import { useApp } from './ctx.js';
 import { DayStrip } from './Itinerary.jsx';
 
@@ -52,7 +52,7 @@ function ColorInput({ onCommit, ...props }) {
 }
 
 export default function Wardrobe() {
-  const { acts, trip, outfits, updateOutfits, saveOutfit, w, patchW, setModal } = useApp();
+  const { trip, outfits, updateOutfits, saveOutfit, w, patchW, setModal } = useApp();
   const { wDay: d, wSlot, wGender, wColor, wPattern, wDesign, wText, wPrint, editSlot } = w;
   useEffect(() => { lastSlot = null; });
   const wornRef = useRef(), garmentsRef = useRef();
@@ -175,7 +175,7 @@ export default function Wardrobe() {
   );
   const editor = (
     <div className="editor">
-      <p className="editing">{edit ? <>✏️ Editando <b>{chipName(edit)}</b>: los cambios se aplican al instante</> : '① Elige color y estilo · ② toca una prenda para ponértela'}</p>
+      <p className="editing">{edit ? <>✏️ Editando <b>{chipName(edit)}</b>: los cambios se aplican al instante</> : ''}</p>
       {panels.length > 1 && (
         <div className="seg" role="tablist" style={{ gridTemplateColumns: `repeat(${panels.length}, 1fr)` }}>
           {panels.map((k) => <button key={k} className={panel === k ? 'on' : ''} onClick={() => patchW({ wPanel: k })}>{k === 'color' ? <><i style={{ '--c': wColor }}></i>Color</> : PANEL_LABEL[k]}</button>)}
@@ -197,15 +197,10 @@ export default function Wardrobe() {
   const date = dayDate(trip.start_date, d);
   const worn = Object.entries(o).filter(([, v]) => v?.g);
   const garments = GARMENTS.filter((g) => g.slot === wSlot && (wGender === 'all' || g.g === 'u' || g.g === wGender));
-  const dayActs = actsOf(acts, d);
-  const hint = dayActs.some((a) => a.category === 'playa') ? '🏖️ Hay playa ese día: ¡no olvides el traje de baño!'
-    : dayActs.some((a) => a.category === 'fiesta') ? '🎉 Hay fiesta: algo con brillo o color fuerte.'
-    : dayActs.some((a) => a.category === 'naturaleza') ? '🥾 Hay naturaleza: calzado cómodo y gorra.' : '☀️ Rio es calor húmedo: camisetas holgadas y telas frescas.';
   const pickDay = (day) => patchW({ wDay: day, editSlot: null });
 
   return (
     <>
-      <p className="private-note">🔒 Tu guardarropa es solo tuyo: los demás no lo ven.</p>
       <DayStrip sel={d} onPick={pickDay} />
       <div className="wardrobe">
         <div className="stage" id="stage">
@@ -219,7 +214,7 @@ export default function Wardrobe() {
           <Mannequin html={figureSVG(o, profile, { animate: lastSlot })} />
           <div className="worn" ref={wornRef}>{worn.length ? worn.map(([k, v]) => (
             <span key={k} data-flip={k} className={`chip ${k === editSlot ? 'edit' : ''}`} style={{ '--c': v.c }}><button className="chip-name" onClick={() => editChip(k)} title="Editar">{chipName(v)}</button><button onClick={() => unwear(k)} aria-label="Quitar">✕</button></span>
-          )) : <span className="muted">Tu muñeco espera su look 👀</span>}</div>
+          )) : null}</div>
           <div className="stage-tools">
             <button className="btn ghost" onClick={randomOutfit}>🎲<span> Sorpréndeme</span></button>
             <button className="btn ghost" onClick={() => setModal({ type: 'copy' })}>📋<span> Copiar a…</span></button>
@@ -227,12 +222,11 @@ export default function Wardrobe() {
           </div>
         </div>
         <div className="catalog">
-          <p className="tipbar">{hint}</p>
           <div className="slots">{SLOTS.map(([k, label, em]) => <button key={k} className={k === wSlot ? 'on' : ''} onClick={() => pickSlot(k)}><span>{em}</span>{label}</button>)}</div>
           {wSlot === 'me' ? me : (
             <>
               {editor}
-              <div className="grid-head"><p className="mini-title">{garments.length} modelos · toca para ponértelo</p>
+              <div className="grid-head"><p className="mini-title">{garments.length} modelos</p>
                 <div className="gender">{[['all', 'Todo'], ['m', 'Él'], ['f', 'Ella']].map(([k, l]) => <button key={k} className={k === wGender ? 'on' : ''} onClick={() => patchW({ wGender: k })}>{l}</button>)}</div></div>
               <div className="garments" ref={garmentsRef}>{garments.map((g, i) => {
                 const on = o[slotOf(g)]?.g === g.id;
@@ -240,7 +234,6 @@ export default function Wardrobe() {
               })}</div>
             </>
           )}
-          <p className="combo">✨ {GARMENTS.length} modelos × {COLORS.length}+ colores × {PATTERNS.length} estampados × {DESIGNS.length} diseños = <b>{(GARMENTS.length * COLORS.length * PATTERNS.length * DESIGNS.length).toLocaleString('es')}</b> combinaciones</p>
         </div>
       </div>
       <div className="panel week"><h3>Mi maleta: looks de los 11 días</h3><div className="minis">{Array.from({ length: DAYS }, (_, i) => (
