@@ -93,7 +93,8 @@ export default function App() {
     let touch = null;
     const start = (e) => {
       const zone = e.target.closest('.view-itin .day-head, .view-itin .timeline, .view-itin .empty, #stage');
-      touch = zone ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+      // la fila de prendas puestas se desliza sola: ahí no cambia de día
+      touch = zone && !e.target.closest('.worn') ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
     };
     const end = (e) => {
       if (!touch) return;
