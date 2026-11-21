@@ -1,4 +1,4 @@
-// Función serverless de Vercel (y middleware de `npm run dev`): misma lógica y rutas que el antiguo server.js.
+// Función serverless de Vercel (vercel.json enruta /api/* hasta aquí) y middleware de `npm run dev`: misma lógica y rutas que el antiguo server.js.
 import { neon } from '@neondatabase/serverless';
 
 const DAYS = 11;
@@ -190,9 +190,10 @@ export default async function handler(req, res) {
     await init();
     const verifier = url.searchParams.get('neon_auth_session_verifier');
     if (verifier) await finishGoogle(req, res, verifier);
-    else await api(req, res, url.pathname);
+    else await api(req, res, url.searchParams.has('__p') ? '/api/' + url.searchParams.get('__p') : url.pathname); // __p: ruta original tras el rewrite de vercel.json
   } catch (e) {
     console.error(e);
-    if (!res.headersSent) send(res, 500, { error: 'Error del servidor' });
+    // la falta de variables de entorno se dice claramente; el resto de errores solo va al log de Vercel
+    if (!res.headersSent) send(res, 500, { error: e.message?.startsWith('Faltan') ? e.message : 'Error del servidor' });
   }
 }

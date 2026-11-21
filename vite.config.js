@@ -8,7 +8,7 @@ const devApi = (mode) => ({
     Object.assign(process.env, loadEnv(mode, process.cwd(), ''));
     server.middlewares.use(async (req, res, next) => {
       if (!req.url.startsWith('/api/')) return next();
-      const { default: handler } = await server.ssrLoadModule('/api/[...path].js');
+      const { default: handler } = await server.ssrLoadModule('/api/index.js');
       handler(req, res);
     });
   },
