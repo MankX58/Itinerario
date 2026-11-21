@@ -119,6 +119,7 @@ export default function Itinerary() {
   };
   const toggle = async (a, e) => {
     const checked = e.target.checked;
+    navigator.vibrate?.(checked ? [10, 30, 10] : 8);
     if (checked) { const r = e.target.getBoundingClientRect(); confetti(r.left + 10, r.top); }
     const patch = (v) => setActs((x) => x.map((y) => (y.id === a.id ? { ...y, ...v } : y)));
     patch({ done: checked });

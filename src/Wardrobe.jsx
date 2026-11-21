@@ -102,6 +102,7 @@ export default function Wardrobe() {
     }
     patchW({ editSlot: edit });
     setOutfit(no, slot);
+    navigator.vibrate?.(8); // pequeño toque háptico en móviles Android
   };
   const randomOutfit = () => {
     const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -210,6 +211,11 @@ export default function Wardrobe() {
         <div className="stage" id="stage">
           <div className="stage-sky"><div className="stage-sun"></div></div>
           <div className="stage-title"><b>Look del día {d}</b><span>{date ? fmtDate(date, { weekday: 'long', day: 'numeric', month: 'short' }) : <em className="swipe-hint">Desliza para cambiar de día</em>}</span></div>
+          <div className="stage-nav">
+            <button onClick={() => pickDay(d - 1)} disabled={d === 1} aria-label="Día anterior">‹</button>
+            <span>Día {d} de {DAYS}</span>
+            <button onClick={() => pickDay(d + 1)} disabled={d === DAYS} aria-label="Día siguiente">›</button>
+          </div>
           <Mannequin html={figureSVG(o, profile, { animate: lastSlot })} />
           <div className="worn" ref={wornRef}>{worn.length ? worn.map(([k, v]) => (
             <span key={k} data-flip={k} className={`chip ${k === editSlot ? 'edit' : ''}`} style={{ '--c': v.c }}><button className="chip-name" onClick={() => editChip(k)} title="Editar">{chipName(v)}</button><button onClick={() => unwear(k)} aria-label="Quitar">✕</button></span>
