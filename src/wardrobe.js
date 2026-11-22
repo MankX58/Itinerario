@@ -22,6 +22,8 @@ export const PATTERNS = [
 export const DESIGNS = [
   ['none', 'Sin diseño'], ['chest', 'Logo en el pecho'], ['center', 'Texto al centro'], ['big', 'Gráfico grande'],
   ['text', 'Frase en bloque'], ['script', 'Firma cursiva'], ['pocket', 'Bolsillo'], ['band', 'Franja'],
+  ['skull', 'Calavera'], ['smile', 'Carita feliz'], ['sun', 'Sol'], ['palm', 'Palmera'],
+  ['number', 'Número deportivo'], ['flames', 'Llamas'], ['stars', 'Estrellas'],
 ];
 
 export const SLOTS = [
@@ -30,9 +32,14 @@ export const SLOTS = [
   ['glasses', 'Gafas', '🕶️'], ['extra', 'Extras', '👜'], ['me', 'Mi muñeco', '🧍'],
 ];
 
-export const SKINS = ['#f9d7c0', '#eebb99', '#d9a173', '#b97c50', '#8d5a36', '#5c3a21'];
-export const HAIRS = ['#1b1035', '#4a2c1a', '#8b5a2b', '#d4a24c', '#b33a1e', '#9aa0a6'];
+export const SKINS = ['#fbdcc8', '#eebb99', '#d9a173', '#b97c50', '#8d5a36', '#5c3a21'];
+export const HAIR_STYLES = [
+  ['curly', 'Rizos con volumen'], ['curlyfade', 'Rizos con degradado'], ['curlylong', 'Rizos largos'],
+  ['short', 'Corto'], ['buzz', 'Rapado'], ['long', 'Largo liso'], ['bun', 'Moño'],
+];
+export const HAIRS = ['#1b1035', '#4a2c1a', '#8b5a2b', '#d4a24c', '#b33a1e', '#9aa0a6', '#f6dcb0', '#f8d995', '#ffddb7'];
 
+export const INK = '#4a1d3d'; // contorno ciruela de todo el dibujo
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const lum = (hex) => {
   const n = parseInt(hex.slice(1), 16);
@@ -44,6 +51,12 @@ export const shade = (hex, k) => {
   return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join('');
 };
 export const autoPrint = (c) => (lum(c) > 0.62 ? '#1b1035' : '#ffffff');
+export const mix = (a, b, t) => {
+  const p = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+};
+const ribOf = (c) => (lum(c) > 0.6 ? mix(c, '#8f8f9c', 0.55) : mix(c, '#ffffff', 0.32));
 const accentOf = (c) => (lum(c) > 0.62 ? ['#1b1035', 0.45] : ['#ffffff', 0.6]);
 
 function patternDef(id, kind, c) {
@@ -101,8 +114,10 @@ const BOXY_HEM = [[60, 222], [100, 223]];
 
 const VB = { top: '28 68 144 160', bottom: '36 196 128 202', full: '30 72 140 326', swim: '34 72 132 196', shoes: '60 376 80 30', hat: '40 2 120 48', glasses: '74 32 52 22' };
 const ln = (d, s, w = 1.2, extra = '') => `<path d="${d}" fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
-const collarRib = ({ s }) => ln('M88 80 Q100 91 112 80', s, 2.6);
-const mockRib = ({ s }) => ln('M90 78 Q100 86 110 78', s, 3.2);
+const seams = () => ln('M66 87 Q63 104 66 121', INK, 1.3) + ln('M134 87 Q137 104 134 121', INK, 1.3);
+const band = (d, c, w) => ln(d, INK, w + 2.2) + ln(d, ribOf(c), w);
+const collarRib = ({ c }) => band('M88.5 80 Q100 91 111.5 80', c, 2.6) + seams();
+const mockRib = ({ c }) => band('M90 78.5 Q100 86 110 78.5', c, 3.2) + seams();
 const lapels = ({ s }) => ln('M88 79 L94 96 L100 101 L106 96 L112 79', s, 1.5);
 const buttons = (s, y0, y1) => {
   let o = ln(`M100 ${y0} V${y1}`, s, 1);
@@ -111,6 +126,11 @@ const buttons = (s, y0, y1) => {
 };
 const sleeveHems = (s, l, r) => ln(l, s, 1) + ln(r, s, 1);
 const polo = ({ f, s }) => `<path d="M86 79 L95 95 L100 87 L105 95 L114 79 L106 77 L100 85 L94 77Z" fill="${f}" stroke="${s}" stroke-width="1.4"/>${buttons(s, 87, 112)}`;
+// polo con cuello, botones y puños del color contrario (oscuro sobre claro, blanco sobre oscuro)
+const poloContrast = (cuffs) => ({ f, c }) => {
+  const k = lum(c) > 0.55 ? '#14141a' : '#ffffff', sk = lum(k) > 0.5 ? '#9aa0a6' : '#000000';
+  return `<path d="M86 79 L95 95 L100 87 L105 95 L114 79 L106 77 L100 85 L94 77Z" fill="${k}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>${buttons(sk, 87, 112)}${ln(cuffs[0], k, 3.4)}${ln(cuffs[1], k, 3.4)}${ln(cuffs[0], INK, 0.8)}${ln(cuffs[1], INK, 0.8)}`;
+};
 const waist = (s) => ln('M64 212 H136', s, 1.2);
 const draw = (s) => ln('M96 210 q-2 14 -6 24 M104 210 q2 14 6 24', '#fff', 1.6) + `<path d="M64 204 H136 V214 H64 Z" fill="none" stroke="${s}" stroke-width="1.2"/>`;
 
@@ -122,12 +142,14 @@ export const GARMENTS = [
   { id: 'boxymock', name: 'Oversize cuello alto', slot: 'top', g: 'u', pr: true, d: top(MOCK, BOXY, BOXY_HEM), x: mockRib },
   { id: 'heavy', name: 'Oversize peso pesado', slot: 'top', g: 'u', pr: true, d: top(NECK, BOXY, [[59, 214], [100, 215]]),
     x: (o) => collarRib(o) + ln('M60 207 H140', o.s, 1) + sleeveHems(o.s, 'M41 148 L60 151', 'M159 148 L140 151') },
-  { id: 'vtee', name: 'Camiseta cuello V', slot: 'top', g: 'u', pr: true, d: top(VNECK, SLEEVE, FIT_HEM), x: ({ s }) => ln('M88 79 L100 101 L112 79', s, 2) },
+  { id: 'vtee', name: 'Camiseta cuello V', slot: 'top', g: 'u', pr: true, d: top(VNECK, SLEEVE, FIT_HEM), x: ({ c }) => band('M88 79 L100 101 L112 79', c, 2) + seams() },
   { id: 'longtee', name: 'Manga larga', slot: 'top', g: 'u', pr: true, d: top(NECK, LONG, FIT_HEM), x: collarRib },
   { id: 'sweat', name: 'Buzo (para el avión)', slot: 'top', g: 'u', pr: true, d: top(NECK, BOXY_LONG, [[61, 216], [100, 217]]),
     x: (o) => collarRib(o) + `<path d="M61 207 H139 V216 H61Z" fill="none" stroke="${o.s}" stroke-width="1.2"/>` + sleeveHems(o.s, 'M38 192 L56 199', 'M162 192 L144 199') },
   { id: 'polo', name: 'Polo', slot: 'top', g: 'u', pr: true, d: top(NECK, SLEEVE, FIT_HEM), x: polo },
   { id: 'polobox', name: 'Polo oversize', slot: 'top', g: 'u', pr: true, d: top(NECK, BOXY, BOXY_HEM), x: polo },
+  { id: 'polocon', name: 'Polo cuello contrario', slot: 'top', g: 'u', pr: true, d: top(NECK, SLEEVE, FIT_HEM), x: poloContrast(['M45.6 128 L63.3 131', 'M154.4 128 L136.7 131']) },
+  { id: 'poloboxcon', name: 'Polo oversize cuello contrario', slot: 'top', g: 'u', pr: true, d: top(NECK, BOXY, BOXY_HEM), x: poloContrast(['M41.3 150 L60.5 153', 'M158.7 150 L139.5 153']) },
   { id: 'jersey', name: 'Camiseta deportiva', slot: 'top', g: 'u', pr: true, d: top(VNECK, SLEEVE, FIT_HEM),
     x: ({ s }) => ln('M88 80 L100 100 L112 80', '#ffd60a', 4) + ln('M68 120 V204 M132 120 V204', '#2d6a4f', 5) },
   { id: 'hawaii', name: 'Camisa de botones', slot: 'top', g: 'u', d: top(VNECK, BOXY, [[60, 220], [100, 221]]),
@@ -162,34 +184,34 @@ export const GARMENTS = [
     x: ({ s }) => waist(s) + ln('M70 214 Q74 226 66 232 M130 214 Q126 226 134 232', s) },
   { id: 'cargo', name: 'Bermuda cargo', slot: 'bottom', g: 'm', d: sym([100, 204], [[63, 204], [60, 232], [58, 300], [97, 301], [100, 242]]),
     x: ({ f, s }) => waist(s) + `<path d="M58 250 H74 V276 H58 Z M142 250 H126 V276 H142 Z" fill="${f}" stroke="${s}" stroke-width="1.3"/>` },
-  { id: 'pants', name: 'Pantalón de lino', slot: 'bottom', g: 'u', d: sym([100, 204], [[63, 204], [60, 240], [62, 392], [97, 392], [100, 248]]),
-    x: ({ s }) => waist(s) + ln('M80 252 L80 388 M120 252 L120 388', s, 1, 'opacity=".5"') },
-  { id: 'baggyjeans', name: 'Jeans baggy', slot: 'bottom', g: 'u', d: sym([100, 204], [[63, 204], ['Q', 57, 240, 56, 300], [54, 396], [98, 396], [100, 248]]),
-    x: ({ s }) => waist(s) + ln('M100 212 V244 M70 214 Q76 228 64 234 M130 214 Q124 228 136 234', '#e9b44c', 1, 'stroke-dasharray="2 2"') + ln('M56 380 Q76 386 97 382 M103 382 Q124 386 144 380', s, 1) },
-  { id: 'jeans', name: 'Jeans rectos', slot: 'bottom', g: 'u', d: sym([100, 204], [[64, 204], [64, 300], [72, 392], [97, 392], [100, 246]]),
+  { id: 'pants', name: 'Pantalón de lino', slot: 'bottom', g: 'u', d: sym([100, 204], [[63, 204], [60, 240], [62, 378], [97, 378], [100, 248]]),
+    x: ({ s }) => waist(s) + ln('M80 252 L80 374 M120 252 L120 374', s, 1, 'opacity=".5"') },
+  { id: 'baggyjeans', name: 'Jeans baggy', slot: 'bottom', g: 'u', d: sym([100, 204], [[63, 204], ['Q', 57, 240, 56, 300], [54, 380], [98, 380], [100, 248]]),
+    x: ({ s }) => waist(s) + ln('M100 212 V244 M70 214 Q76 228 64 234 M130 214 Q124 228 136 234', '#e9b44c', 1, 'stroke-dasharray="2 2"') + ln('M56 366 Q76 372 97 368 M103 368 Q124 372 144 366', s, 1) },
+  { id: 'jeans', name: 'Jeans rectos', slot: 'bottom', g: 'u', d: sym([100, 204], [[64, 204], [64, 300], [72, 378], [97, 378], [100, 246]]),
     x: ({ s }) => waist(s) + ln('M100 212 V242 M70 214 Q76 228 64 234 M130 214 Q124 228 136 234', '#e9b44c', 1, 'stroke-dasharray="2 2"') },
   { id: 'wshorts', name: 'Short de jean', slot: 'bottom', g: 'f', d: sym([100, 204], [[63, 204], [59, 230], [58, 248], [97, 250], [100, 230]]),
     x: () => ln('M58 248 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 M103 250 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4 l3 4 l3 -4', '#fff', 1) },
   { id: 'miniskirt', name: 'Falda corta', slot: 'bottom', g: 'f', d: sym([100, 204], [[64, 204], [50, 268], ['Q', 75, 276, 100, 278]]),
     x: ({ s }) => ln('M80 210 L72 270 M100 210 V276 M120 210 L128 270', s, 1, 'opacity=".5"') },
-  { id: 'maxiskirt', name: 'Falda larga', slot: 'bottom', g: 'f', d: sym([100, 204], [[64, 204], [44, 382], ['Q', 72, 392, 100, 393]]),
-    x: ({ s }) => ln('M80 212 L64 384 M100 212 V390 M120 212 L136 384', s, 1, 'opacity=".45"') },
+  { id: 'maxiskirt', name: 'Falda larga', slot: 'bottom', g: 'f', d: sym([100, 204], [[64, 204], [44, 370], ['Q', 72, 378, 100, 379]]),
+    x: ({ s }) => ln('M80 212 L64 372 M100 212 V376 M120 212 L136 372', s, 1, 'opacity=".45"') },
   { id: 'wrap', name: 'Falda pareo', slot: 'bottom', g: 'f', d: 'M64 204 L136 204 L150 330 Q110 350 52 300 Z',
     x: ({ f, s }) => `<circle cx="130" cy="214" r="6" fill="${f}" stroke="${s}"/>` + ln('M128 218 L122 250 M134 218 L140 248', s, 3) },
-  { id: 'culotte', name: 'Pantalón palazzo', slot: 'bottom', g: 'f', d: sym([100, 204], [[64, 204], [50, 392], [97, 392], [100, 250]]), x: ({ s }) => ln('M64 214 H136', s, 2) },
+  { id: 'culotte', name: 'Pantalón palazzo', slot: 'bottom', g: 'f', d: sym([100, 204], [[64, 204], [50, 378], [97, 378], [100, 250]]), x: ({ s }) => ln('M64 214 H136', s, 2) },
 
   // ---- VESTIDOS ----
   { id: 'sundress', name: 'Vestido corto', slot: 'full', g: 'f', d: sym([100, 92], [['Q', 86, 90, 72, 96], [68, 150], ['Q', 72, 172, 68, 200], [46, 280], ['Q', 72, 290, 100, 292]]),
     x: ({ s }) => ln('M80 95 L82 80 M120 95 L118 80', s, 2.4) + ln('M68 172 Q100 180 132 172', s) },
-  { id: 'maxidress', name: 'Vestido largo', slot: 'full', g: 'f', d: sym([100, 92], [['Q', 86, 90, 72, 96], [68, 150], ['Q', 72, 172, 68, 200], [40, 384], ['Q', 70, 396, 100, 397]]),
-    x: ({ s }) => ln('M80 95 L82 80 M120 95 L118 80', s, 2.4) + ln('M86 210 L70 386 M114 210 L130 386', s, 1, 'opacity=".4"') },
+  { id: 'maxidress', name: 'Vestido largo', slot: 'full', g: 'f', d: sym([100, 92], [['Q', 86, 90, 72, 96], [68, 150], ['Q', 72, 172, 68, 200], [40, 370], ['Q', 70, 380, 100, 381]]),
+    x: ({ s }) => ln('M80 95 L82 80 M120 95 L118 80', s, 2.4) + ln('M86 210 L70 372 M114 210 L130 372', s, 1, 'opacity=".4"') },
   { id: 'shirtdress', name: 'Vestido camisero', slot: 'full', g: 'f', d: sym([100, 101], [[88, 79], ...SLEEVE, [66, 200], [56, 296], [100, 300]]),
     x: (o) => lapels(o) + buttons(o.s, 101, 292) + ln('M66 180 H134', o.s, 3) },
-  { id: 'jumpsuit', name: 'Enterizo', slot: 'full', g: 'f', d: sym([100, 98], [['Q', 86, 96, 74, 92], [66, 200], [58, 382], [97, 384], [100, 252]]),
+  { id: 'jumpsuit', name: 'Enterizo', slot: 'full', g: 'f', d: sym([100, 98], [['Q', 86, 96, 74, 92], [66, 200], [58, 372], [97, 374], [100, 252]]),
     x: ({ s }) => ln('M80 93 L84 80 M120 93 L116 80', s, 2.4) + ln('M68 186 H132', s, 3) },
   { id: 'romper', name: 'Mono corto', slot: 'full', g: 'f', d: sym([100, 88], [['Q', 92, 88, 88, 80], ...SLEEVE_S, [66, 200], [60, 256], [97, 258], [100, 232]]),
     x: ({ s }) => ln('M66 184 H134', s, 2.4) },
-  { id: 'linenset', name: 'Conjunto de lino', slot: 'full', g: 'm', d: sym([100, 101], [[88, 79], ...BOXY, [61, 214], [60, 240], [62, 392], [97, 392], [100, 248]]),
+  { id: 'linenset', name: 'Conjunto de lino', slot: 'full', g: 'm', d: sym([100, 101], [[88, 79], ...BOXY, [61, 214], [60, 240], [62, 378], [97, 378], [100, 248]]),
     x: (o) => lapels(o) + buttons(o.s, 101, 206) + ln('M61 210 H139', o.s, 1.4) },
 
   // ---- PLAYA ----
@@ -208,31 +230,31 @@ export const GARMENTS = [
     x: ({ s }) => ln('M50 118 L64 128 M150 118 L136 128', s, 3) },
 
   // ---- CALZADO ----
-  { id: 'havaianas', name: 'Chanclas', slot: 'shoes', g: 'u', d: 'M70 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z M102 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z',
+  { id: 'havaianas', open: true, name: 'Chanclas', slot: 'shoes', g: 'u', d: 'M70 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z M102 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z',
     x: ({ s }) => ln('M76 397 L84 388 L92 397 M108 397 L116 388 L124 397', s, 3) },
-  { id: 'slides', name: 'Slides', slot: 'shoes', g: 'u', d: 'M70 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z M102 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z',
+  { id: 'slides', open: true, name: 'Slides', slot: 'shoes', g: 'u', d: 'M70 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z M102 398 a14 5 0 1 0 28 0 a14 5 0 1 0 -28 0 Z',
     x: ({ f, s }) => `<path d="M73 386 H95 V395 H73 Z M105 386 H127 V395 H105 Z" fill="${f}" stroke="${s}" stroke-width="1.2"/>` },
   { id: 'sneakers', name: 'Tenis', slot: 'shoes', g: 'u', d: 'M72 384 L94 384 Q100 392 98 400 L68 400 Q66 390 72 384 Z M106 384 L128 384 Q134 390 132 400 L102 400 Q100 392 106 384 Z',
     x: () => ln('M68 397 H98 M102 397 H132', '#fff', 3) + ln('M76 386 l4 4 M82 386 l4 4 M112 386 l4 4 M118 386 l4 4', '#fff', 1.2) },
   { id: 'chunky', name: 'Tenis gruesos', slot: 'shoes', g: 'u', d: 'M70 380 L94 380 Q102 390 100 396 L66 396 Q64 386 70 380 Z M106 380 L130 380 Q136 386 134 396 L100 396 Q98 390 106 380 Z',
     x: () => `<path d="M64 396 H101 V404 H64 Z M99 396 H136 V404 H99 Z" fill="#fff" stroke="#1b1035" stroke-width="1"/>` },
-  { id: 'sandals', name: 'Sandalias', slot: 'shoes', g: 'f', d: 'M70 398 a14 4 0 1 0 28 0 a14 4 0 1 0 -28 0 Z M102 398 a14 4 0 1 0 28 0 a14 4 0 1 0 -28 0 Z',
+  { id: 'sandals', open: true, name: 'Sandalias', slot: 'shoes', g: 'f', d: 'M70 398 a14 4 0 1 0 28 0 a14 4 0 1 0 -28 0 Z M102 398 a14 4 0 1 0 28 0 a14 4 0 1 0 -28 0 Z',
     x: ({ f }) => ln('M74 394 L94 388 M74 388 L94 394 M106 394 L126 388 M106 388 L126 394 M78 382 H92 M108 382 H122', f, 3) },
   { id: 'espadrilles', name: 'Alpargatas', slot: 'shoes', g: 'u', d: 'M72 384 L94 384 Q100 390 98 396 L68 396 Q66 388 72 384 Z M106 384 L128 384 Q134 388 132 396 L102 396 Q100 390 106 384 Z',
     x: () => `<path d="M68 396 H98 L98 401 H68 Z M102 396 H132 L132 401 H102 Z" fill="#d8b98a" stroke="#a07c4a" stroke-width=".8"/>` },
   { id: 'loafers', name: 'Mocasines', slot: 'shoes', g: 'm', d: 'M72 386 L94 386 Q100 392 98 400 L68 400 Q66 392 72 386 Z M106 386 L128 386 Q134 392 132 400 L102 400 Q100 392 106 386 Z',
     x: ({ s }) => ln('M76 389 H88 M112 389 H124', s, 2) },
-  { id: 'wedges', name: 'Cuñas', slot: 'shoes', g: 'f', d: 'M68 400 L98 392 L98 402 L68 402 Z M102 392 L132 400 L132 402 L102 402 Z',
+  { id: 'wedges', open: true, name: 'Cuñas', slot: 'shoes', g: 'f', d: 'M68 400 L98 392 L98 402 L68 402 Z M102 392 L132 400 L132 402 L102 402 Z',
     x: ({ f, s }) => ln('M76 392 L92 384 M108 384 L124 392', f, 3) + ln('M68 402 H98 M102 402 H132', s, 2) },
 
   // ---- SOMBREROS ----
   { id: 'cap', name: 'Gorra', slot: 'hat', g: 'u', d: 'M78 34 Q80 12 100 12 Q120 12 122 34 Z M100 30 L138 33 Q132 40 100 37 Z', x: ({ s }) => `<circle cx="100" cy="12" r="2.4" fill="${s}"/>` },
   { id: 'panama', name: 'Sombrero panamá', slot: 'hat', g: 'u', d: 'M60 32 a40 7 0 1 0 80 0 a40 7 0 1 0 -80 0 Z M80 32 Q80 10 100 10 Q120 10 120 32 Z', x: () => `<path d="M80.5 26 H119.5 V31 H80.5 Z" fill="#1b1035"/>` },
-  { id: 'floppy', name: 'Pamela', slot: 'hat', g: 'f', d: 'M46 34 a54 9 0 1 0 108 0 a54 9 0 1 0 -108 0 Z M80 33 Q80 12 100 12 Q120 12 120 33 Z', x: () => `<path d="M80.5 27 H119.5 V32 H80.5 Z" fill="#ff6f61"/>` },
-  { id: 'bucket', name: 'Bucket hat', slot: 'hat', g: 'u', d: 'M80 30 Q82 12 100 12 Q118 12 120 30 L130 42 Q100 48 70 42 Z' },
+  { id: 'floppy', name: 'Pamela', slot: 'hat', g: 'f', d: 'M46 31 a54 7.5 0 1 0 108 0 a54 7.5 0 1 0 -108 0 Z M80 31 Q80 12 100 12 Q120 12 120 31 Z', x: () => `<path d="M80.5 25 H119.5 V30 H80.5 Z" fill="#ff6f61"/>` },
+  { id: 'bucket', name: 'Bucket hat', slot: 'hat', g: 'u', d: 'M80 28 Q82 12 100 12 Q118 12 120 28 L130 35 Q100 40 70 35 Z' },
   { id: 'beanie', name: 'Gorro (avión)', slot: 'hat', g: 'u', d: 'M77 34 Q77 10 100 10 Q123 10 123 34 Z', x: ({ s }) => ln('M77 30 H123', s, 3) },
   { id: 'bandana', name: 'Pañuelo turbante', slot: 'hat', g: 'f', d: 'M76 36 Q76 12 100 12 Q124 12 124 36 Q100 28 76 36 Z' },
-  { id: 'visor', name: 'Visera', slot: 'hat', g: 'u', d: 'M78 30 Q100 24 122 30 L122 35 Q100 30 78 35 Z M88 33 L136 36 Q130 44 92 40 Z' },
+  { id: 'visor', open: true, name: 'Visera', slot: 'hat', g: 'u', d: 'M78 30 Q100 24 122 30 L122 35 Q100 30 78 35 Z M88 33 L136 36 Q130 44 92 40 Z' },
 
   // ---- GAFAS ----
   { id: 'round', name: 'Redondas', slot: 'glasses', g: 'u', lens: true, d: 'M84 44 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 Z M102 44 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 Z' },
@@ -246,7 +268,7 @@ export const GARMENTS = [
   { id: 'heart', name: 'Corazón', slot: 'glasses', g: 'f', lens: true, d: 'M90 50 L83 43 Q81 37 86 37 Q89 37 90 40 Q91 37 94 37 Q99 37 97 43 Z M110 50 L103 43 Q101 37 106 37 Q109 37 110 40 Q111 37 114 37 Q119 37 117 43 Z' },
 
   // ---- EXTRAS ----
-  { id: 'tote', name: 'Bolso de playa', slot: 'extra', g: 'u', vb: '120 150 70 90', d: 'M140 190 L178 190 L182 234 L136 234 Z', x: ({ s }) => ln('M146 190 Q159 160 172 190', s, 3) },
+  { id: 'tote', name: 'Bolso de playa', slot: 'extra', g: 'u', vb: '115 190 72 82', d: 'M131 224 L169 224 L173 268 L127 268 Z', x: ({ s }) => ln('M137 224 Q150 190 163 224', s, 3) },
   { id: 'fanny', name: 'Riñonera', slot: 'extra', g: 'u', vb: '56 186 88 40', d: 'M84 198 Q100 192 116 198 L118 214 Q100 220 82 214 Z', x: ({ s }) => ln('M64 200 Q74 202 84 202 M116 202 Q126 202 136 200', s, 3) },
   { id: 'crossbag', name: 'Bolso cruzado', slot: 'extra', g: 'u', vb: '60 76 90 150', d: 'M118 190 H140 V210 H118 Z', x: ({ s }) => ln('M80 84 L128 190', s, 2.5) },
   { id: 'camera', name: 'Cámara turista', slot: 'extra', g: 'u', vb: '70 76 60 100', d: 'M88 146 H112 V164 H88 Z',
@@ -297,6 +319,16 @@ function printSVG(item) {
     case 'script': return `<text x="100" y="118" font-size="13" text-anchor="middle" fill="${pc}" font-family="Caveat, cursive" ${fit(raw || 'Saudade', 13, 50)}>${T('Saudade')}</text>`;
     case 'pocket': return `<path d="M78 106 H92 V120 Q85 124 78 120 Z" fill="none" stroke="${pc}" stroke-width="1.4"/>${raw ? `<text x="85" y="102" font-size="4.5" text-anchor="middle" fill="${pc}" ${F} ${fit(raw, 4.5, 22)}>${esc(raw)}</text>` : ''}`;
     case 'band': return `<rect x="64" y="124" width="72" height="12" fill="${pc}"/>${raw ? `<text x="100" y="133" font-size="7" text-anchor="middle" fill="${autoPrint(pc)}" ${F} ${fit(raw, 7, 64)}>${esc(raw)}</text>` : ''}`;
+    case 'skull': return `<g fill="${pc}"><path d="M100 108 a13 13 0 0 1 13 13 v6 q0 4 -4 5 v6 h-18 v-6 q-4 -1 -4 -5 v-6 a13 13 0 0 1 13 -13Z"/></g><g fill="${autoPrint(pc)}"><circle cx="94.5" cy="122" r="3.4"/><circle cx="105.5" cy="122" r="3.4"/><path d="M100 126 l-2 4 h4Z"/></g>${ln('M95 133 V138 M100 133 V138 M105 133 V138', autoPrint(pc), 1)}${raw ? `<text x="100" y="152" font-size="6" text-anchor="middle" fill="${pc}" ${F} ${fit(raw, 6, 50)}>${esc(raw)}</text>` : ''}`;
+    case 'smile': return `<circle cx="100" cy="128" r="14" fill="${pc}"/><g fill="${autoPrint(pc)}"><circle cx="95" cy="123" r="1.9"/><circle cx="105" cy="123" r="1.9"/></g>${ln('M92 131 Q100 140 108 131', autoPrint(pc), 1.8)}`;
+    case 'sun': return `<circle cx="100" cy="128" r="8" fill="${pc}"/>${ln([...Array(12)].map((_, i) => { const a = i * Math.PI / 6; return `M${(100 + 11.5 * Math.cos(a)).toFixed(1)} ${(128 + 11.5 * Math.sin(a)).toFixed(1)} L${(100 + 16 * Math.cos(a)).toFixed(1)} ${(128 + 16 * Math.sin(a)).toFixed(1)}`; }).join(' '), pc, 2)}`;
+    case 'palm': return `${ln('M98 156 Q103 140 100 124', pc, 2.6)}<g fill="${pc}"><path d="M100 124 Q88 110 74 122 Q90 118 100 124Z"/><path d="M100 124 Q112 110 126 122 Q110 118 100 124Z"/><path d="M100 124 Q92 108 98 98 Q106 112 100 124Z"/><path d="M100 124 Q84 124 78 140 Q92 132 100 124Z"/><path d="M100 124 Q116 124 122 140 Q108 132 100 124Z"/></g>`;
+    case 'number': return `<text x="100" y="142" font-size="34" text-anchor="middle" fill="${pc}" ${F} ${fit(raw || '10', 34, 52)}>${T('10')}</text>`;
+    case 'flames': return `<path d="M70 168 Q72 154 80 158 Q80 144 90 149 Q94 134 100 145 Q106 134 110 149 Q120 144 120 158 Q128 154 130 168Z" fill="${pc}"/>`;
+    case 'stars': {
+      const star = (cx, cy, r) => `<path d="${[...Array(10)].map((_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.45 : r; return `${i ? 'L' : 'M'}${(cx + q * Math.cos(a)).toFixed(1)} ${(cy + q * Math.sin(a)).toFixed(1)}`; }).join(' ')}Z"/>`;
+      return `<g fill="${pc}">${star(100, 124, 9)}${star(80, 114, 5)}${star(120, 114, 5)}${star(86, 142, 4)}${star(114, 142, 4)}</g>`;
+    }
     default: return '';
   }
 }
@@ -308,9 +340,10 @@ function garmentSVG(item, cls = '') {
   const g = GARMENTS.find((x) => x.id === item?.g);
   if (!g) return { defs: '', body: '' };
   const c = item.c || '#ffffff';
-  const s = shade(c, lum(c) > 0.85 ? 0.72 : 0.62);
+  const dark = lum(c) < 0.28, OL = dark ? '#07070b' : INK;
+  const s = dark ? mix(c, '#ffffff', 0.22) : mix(c, INK, lum(c) > 0.85 ? 0.62 : 0.5);
   let defs = '', f = c;
-  if (item.p && item.p !== 'solid') {
+  if (item.p && item.p !== 'solid' && !['shoes', 'glasses', 'extra'].includes(g.slot)) { // también limpia looks guardados con estampado en calzado
     const id = `pt${RUN}${++uid}`;
     defs = patternDef(id, item.p, c);
     f = `url(#${id})`;
@@ -319,11 +352,12 @@ function garmentSVG(item, cls = '') {
   if (g.lens && g.clear) { // cristal transparente: el color es el del marco (blanco = marco oscuro)
     const fr = lum(c) > 0.85 ? '#1b1035' : c;
     body = `<path d="${g.d}" fill="#dff3fb" fill-opacity=".28" stroke="${fr}" stroke-width="2"/>${ln('M98 44 Q100 41 102 44', fr, 2)}${ln('M82 41 L77 40 M118 41 L123 40', fr, 1.6)}`;
-  } else if (g.lens) body = `<path d="${g.d}" fill="${c}" fill-opacity=".85" stroke="#1b1035" stroke-width="2"/>${ln('M98 44 Q100 41 102 44', '#1b1035', 2)}`;
+  } else if (g.lens) body = `<path d="${g.d}" fill="${c}" fill-opacity=".85" stroke="${INK}" stroke-width="2"/>${ln('M98 44 Q100 41 102 44', INK, 2)}`;
   else if (g.stroke) body = `<path d="${g.d}" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`;
-  else body = `<path d="${g.d}" fill="${f}" stroke="${s}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  else body = `<path d="${g.d}" fill="${f}" stroke="${OL}" stroke-width="1.4" stroke-linejoin="round"/>`;
   if (g.x) body += g.x({ f, s, c });
   if (g.pr) body += printSVG(item);
+  if (dark) body = body.replaceAll(INK, OL); // costuras y cuello también casi negros (el ciruela se ve rosa sobre negro)
   return { defs, body: `<g class="${cls}">${body}</g>` };
 }
 
@@ -336,41 +370,134 @@ export function thumbSVG(item, vb) { // vb: recorte opcional (acercar a una zona
   return `<svg viewBox="${vb || g.vb || VB[g.slot]}" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
 }
 
-const ORDER = ['shoes', 'bottom', 'full', 'top', 'extra', 'glasses', 'hat'];
+const ORDER = ['bottom', 'full', 'top', 'shoes', 'extra', 'glasses', 'hat'];
+
+// Pelo estilo ilustración, calcado de la referencia: relleno liso, contorno ciruela fino, ondas suaves con pequeños remolinos
+// (flicks) en las puntas, patillas puntiagudas y mechones junto a las orejas. Los trazados están en las coordenadas de la
+// imagen de referencia (recorte 1080×1000); T las lleva al espacio local de la cabeza (centro x=100, ojos y=46.5).
+const T = 'translate(53.1 -8.3) scale(.0898)';
+const OW = 11; // grosor del contorno en esas unidades (≈1 en la cabeza)
+const mirX = (g) => `<g transform="translate(1044 0) scale(-1 1)">${g}</g>`;
+const tr = (inner) => `<g transform="${T}" stroke-linejoin="round" stroke-linecap="round">${inner}</g>`;
+const blob = (d, h) => `<path d="${d}" fill="${h}" stroke="${INK}" stroke-width="${OW}"/>`;
+const line = (d, c = INK, w = 10) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}"/>`;
+// curva suave cerrada que pasa por los puntos (Catmull-Rom → Bézier)
+function smooth(p) {
+  const n = p.length, f = (v) => Math.round(v);
+  let d = `M${f(p[0][0])} ${f(p[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const a = p[(i - 1 + n) % n], b = p[i], c = p[(i + 1) % n], e = p[(i + 2) % n];
+    d += ` C${f(b[0] + (c[0] - a[0]) / 6)} ${f(b[1] + (c[1] - a[1]) / 6)} ${f(c[0] - (e[0] - b[0]) / 6)} ${f(c[1] - (e[1] - b[1]) / 6)} ${f(c[0])} ${f(c[1])}`;
+  }
+  return d + 'Z';
+}
+
+const BACK_CURLY = 'M170 612 L102 566 Q125 556 148 546 Q92 520 82 470 Q80 450 100 430 Q150 410 190 380 Q140 330 152 290 Q158 240 200 210 Q250 190 306 180 Q270 150 280 110 Q284 88 298 78 Q310 92 322 112 Q352 130 392 120 Q470 100 520 72 Q580 40 640 70 Q668 90 684 152 Q720 126 780 138 Q824 152 836 234 Q900 236 936 286 Q950 320 918 350 Q960 372 986 430 Q1000 470 972 520 Q962 548 970 568 L986 584 Q960 608 930 614 Q900 600 888 592 L850 640 L520 700 L190 640 Z';
+const TUFT = 'M272 742 L212 773 Q252 776 272 790 Q290 802 286 836 Q304 856 348 868 L392 884 L392 742Z';
+const SHORT_BACK = 'M200 612 L150 572 Q132 520 160 470 Q150 380 190 320 Q214 244 290 214 Q268 176 282 132 Q290 120 302 128 Q320 156 372 160 Q460 104 540 96 Q620 86 680 132 Q760 122 810 182 Q872 214 882 300 Q916 380 890 450 Q900 520 876 572 L850 612 L520 700 L200 640 Z';
+const FADE_BACK = 'M236 470 Q176 420 194 354 Q144 318 160 268 Q172 226 210 212 Q250 192 306 182 Q270 150 280 110 Q284 88 298 78 Q310 92 322 112 Q352 130 392 120 Q470 100 520 72 Q580 40 640 70 Q668 90 684 152 Q720 126 780 138 Q824 152 836 234 Q892 238 922 290 Q938 330 906 360 Q930 404 884 450 L850 520 L520 640 L240 520 Z';
+const CURLY_HALF = [[522, 74], [420, 108], [318, 168], [236, 198], [170, 262], [142, 340], [112, 408], [96, 480], [104, 560], [84, 650], [116, 730], [82, 820], [120, 900], [92, 990], [150, 1052], [232, 1030], [292, 1084], [362, 1052], [430, 1076]];
+const LONG_CURLY = smooth([...CURLY_HALF, [522, 1062], ...CURLY_HALF.slice(1).reverse().map(([x, y]) => [1044 - x, y])]);
+const CURL_WAVES = 'M170 700 Q214 760 170 830 M200 900 Q250 960 210 1010 M874 700 Q830 760 874 830 M844 900 Q794 960 834 1010';
+const LOCK_L = 'M170 560 Q90 640 120 740 Q66 800 120 880 Q88 960 150 1012 Q220 1044 252 984 Q304 930 282 860 Q314 790 292 720 Q300 640 270 580Z';
+const BUN = 'M446 142 Q418 70 462 26 Q470 8 492 12 Q520 -6 566 14 Q612 40 600 142Z';
+const LONG_HALF = [[522, 74], [420, 108], [318, 168], [236, 198], [170, 262], [142, 340], [112, 408], [96, 480], [112, 560], [100, 690], [116, 840], [92, 990], [110, 1110], [190, 1150], [300, 1112], [420, 1096]];
+const LONG_BACK = smooth([...LONG_HALF, [522, 1090], ...LONG_HALF.slice(1).reverse().map(([x, y]) => [1044 - x, y])]);
+
+const HL = {
+  curly: 'M805 598 L742 606 Q768 578 772 548 L782 518 Q760 505 738 492 Q760 482 770 462 Q745 456 722 446 Q716 410 700 382 Q680 350 652 346 Q640 356 640 362 Q634 330 612 295 Q596 268 578 276 Q555 290 560 335 Q568 380 584 400 Q586 440 548 462 Q512 478 484 462 Q466 448 472 400 Q452 438 410 444 Q366 448 338 430 Q310 470 296 508 L254 524 Q285 530 302 548 Q292 570 292 590 Q300 604 312 612 L262 604',
+  sweep: 'M805 598 L742 606 Q770 572 774 530 Q776 480 744 452 Q700 424 650 410 Q604 392 584 346 Q566 410 520 436 Q450 470 384 472 Q334 482 304 522 L258 538 Q288 556 296 590 Q300 604 312 612 L262 604',
+  fade: 'M776 478 Q770 462 770 462 Q745 456 722 446 Q716 410 700 382 Q680 350 652 346 Q640 356 640 362 Q634 330 612 295 Q596 268 578 276 Q555 290 560 335 Q568 380 584 400 Q586 440 548 462 Q512 478 484 462 Q466 448 472 400 Q452 438 410 444 Q366 448 338 430 Q310 450 290 478',
+  part: 'M805 598 L742 606 Q776 540 770 478 Q740 478 690 462 Q600 446 540 404 Q530 396 522 392 Q514 396 504 404 Q444 446 354 462 Q304 478 274 478 Q268 540 302 606 L240 598',
+};
+const CLOSE = ' L215 560 L215 260 Q520 150 850 260 L850 560 Z';
+const CLOSE_FADE = ' L236 440 L236 300 Q520 150 830 300 L830 440 Z';
+const HOOK = 'M326 410 Q316 384 336 372 Q352 364 364 372';
+function front(kind, h, extra = '') {
+  return tr(`<path d="${HL[kind]}${kind === 'fade' ? CLOSE_FADE : CLOSE}" fill="${h}"/>${line(HL[kind], INK, OW)}${extra}`);
+}
+
+function hairOf(style, h, skin = '#fbdcc8') {
+  const hook = line(HOOK, INK, 10);
+  const tufts = blob(TUFT, h) + mirX(blob(TUFT, h));
+  const buzz = 'M300 470 Q268 380 330 320 Q400 262 522 262 Q644 262 714 320 Q776 380 744 470 Q700 410 640 395 Q580 380 522 380 Q464 380 404 395 Q344 410 300 470Z';
+  return ({
+    curly: [tr(tufts + blob(BACK_CURLY, h)), front('curly', h, hook)],
+    curlylong: [tr(blob(LONG_CURLY, h) + line(CURL_WAVES, INK, 8) + blob(BACK_CURLY, h)), front('curly', h, hook)],
+    curlyfade: [tr(blob(FADE_BACK, h)),
+      tr(`<path d="M292 478 Q258 520 268 580 L312 560 Q300 520 318 490Z M752 478 Q786 520 776 580 L732 560 Q744 520 726 490Z" fill="${h}" fill-opacity=".45"/>`) + front('fade', h, hook)],
+    short: [tr(blob(SHORT_BACK, h)), front('sweep', h)],
+    bun: [tr(blob(BUN, h) + blob(SHORT_BACK, h)), front('sweep', h)],
+    long: [tr(blob(LONG_BACK, h)), front('part', h)],
+    buzz: ['', tr(`<path d="${buzz}" fill="${h}" fill-opacity=".88"/>${line(buzz, INK, 8)}`)],
+  })[style] || ['', ''];
+}
+
+// ---------- muñeco ----------
+// Estilo "ilustración": contorno ciruela fino, cabeza grande y redonda, cuello en sombra, brazos separados del torso,
+// manos en círculo, piernas rectas con espacio entre ellas y ropa interior base. Cuerpo en viewBox 200×420.
+// La cabeza (pelo, cara, gafas y sombreros) comparte una sola transformación: lo que se dibuja en las coordenadas
+// "antiguas" de la cabeza (prendas de hat/glasses incluidas) se ajusta solo a la cabeza nueva.
+const HEAD_T = 'translate(100 70) scale(1.18 1.12) translate(-100 -70)';
+const BODY_SLOTS = ['bottom', 'full', 'top', 'shoes', 'extra'];
+const HEAD_SLOTS = ['glasses', 'hat'];
+const UNDER = '#e4e5ea', UNDER_BAND = '#cfd0d8';
+const BOXERS = `<path d="${sym([100, 204], [[64, 204], [62, 228], [61, 262], [96.5, 264], [100, 241]])}" fill="${UNDER}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M63.4 204 H136.6 V212 H63.4Z" fill="${UNDER_BAND}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M95 232 Q99.5 230 100.5 238" fill="none" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/>`;
+const SPORT_TOP = `<path d="M69 104 Q100 98 131 104 L131 122 Q100 128 69 122 Z" fill="${UNDER}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>`;
+
 export function figureSVG(outfit = {}, profile = {}, { animate } = {}) {
   const skin = profile.skin || SKINS[1];
   const hair = profile.hair || HAIRS[0];
   const fem = profile.figure === 'f';
   const sk = shade(skin, 0.82);
-  let defs = '', clothes = '';
-  for (const slot of ORDER) {
+  let defs = '', clothes = '', headWear = '';
+  const hatClip = outfit.hat && !garmentById(outfit.hat.g)?.open; // la visera deja el pelo al aire
+  for (const slot of [...BODY_SLOTS, ...HEAD_SLOTS]) {
     if (!outfit[slot]) continue;
     const r = garmentSVG(outfit[slot], animate === slot ? 'pop' : '');
     defs += r.defs;
-    clothes += r.body;
+    if (HEAD_SLOTS.includes(slot)) headWear += r.body; else clothes += r.body;
   }
-  const hairBack = fem ? `<path d="M76 40 Q74 14 100 14 Q126 14 124 40 L130 104 Q116 110 108 94 L108 62 L92 62 L92 94 Q84 110 70 104 Z" fill="${hair}"/>` : '';
-  const hairFront = fem
-    ? `<path d="M78 40 Q80 16 100 16 Q122 16 122 40 Q112 24 96 30 Q86 34 78 40Z" fill="${hair}"/>`
-    : `<path d="M78 42 Q76 16 100 16 Q124 16 122 42 Q118 28 100 27 Q86 27 78 42Z" fill="${hair}"/>`;
-  return `<svg viewBox="0 0 200 420" class="figure" role="img" aria-label="Muñeco con el look del día">
+  // ropa interior base: solo se ve donde no hay otra prenda encima
+  const under = (outfit.bottom || outfit.full ? '' : BOXERS) + (fem && !outfit.top && !outfit.full ? SPORT_TOP : '');
+  const clip = hatClip ? 'transform="translate(100 50) scale(.92 .7) translate(-100 -50)"' : ''; // con sombrero el pelo se aplasta debajo (no se recorta)
+  const [hairBack, hairFront] = hairOf(profile.style || (fem ? 'long' : 'curly'), hair, skin);
+  // silueta única: primero todo con trazo grueso (contorno exterior), luego el relleno encima (sin líneas internas)
+  const closedShoes = outfit.shoes && !garmentById(outfit.shoes.g)?.open; // el calzado cerrado sustituye al pie desnudo
+  const shapes = `<path d="M64 226 L100 226 L100 248 Q95.5 250 95.5 262 Q96.5 300 96.5 332 Q97.5 360 95 386 L77 386 Q75 358 75 334 Q69 300 64 226Z"/><path d="M136 226 L100 226 L100 248 Q104.5 250 104.5 262 Q103.5 300 103.5 332 Q102.5 360 105 386 L123 386 Q125 358 125 334 Q131 300 136 226Z"/>
+    ${closedShoes ? '' : '<path d="M77 383 L95 383 Q100 390 98.5 397 Q95.5 402 84 402 Q72 402 68.5 397 Q67 391 75 385Z"/><path d="M123 383 L105 383 Q100 390 101.5 397 Q104.5 402 116 402 Q128 402 131.5 397 Q133 391 125 385Z"/>'}
+    <path d="M66 86 Q52 88 50 104 L42 198 L43 207 L56 208 L57 200 L66 118Z"/><path d="M134 86 Q148 88 150 104 L158 198 L157 207 L144 208 L143 200 L134 118Z"/>
+    <circle cx="49.5" cy="215" r="9.5"/><circle cx="150.5" cy="215" r="9.5"/>
+    <path d="M66 86 Q100 78 134 86 L133 150 Q132 190 136 228 L64 228 Q68 190 67 150 Z"/>
+    <path d="M91 58 L90 82 Q100 90 110 82 L109 58Z"/>`;
+  const headShapes = `<ellipse cx="74.5" cy="49.5" rx="5" ry="8"/><ellipse cx="125.5" cy="49.5" rx="5" ry="8"/>
+    <path d="M78 42 Q76 15.5 100 15.5 Q124 15.5 122 42 Q126 60 112 68 Q106 72 100 72 Q94 72 88 68 Q74 60 78 42Z"/>`;
+  const blush = (x) => `<ellipse cx="${x}" cy="54.6" rx="6" ry="3.8" fill="#ff9a8a" opacity=".42"/><path d="M${x - 3} 57 l1.4 -3 M${x} 57 l1.4 -3 M${x + 3} 57 l1.4 -3" stroke="#ec7f70" stroke-width=".6" stroke-linecap="round" opacity=".7"/>`;
+  return `<svg viewBox="0 -22 200 444" class="figure" role="img" aria-label="Muñeco con el look del día">
   <defs>${defs}</defs>
-  <ellipse cx="100" cy="404" rx="54" ry="8" fill="#1b1035" opacity=".12"/>
+  <ellipse cx="100" cy="405" rx="56" ry="8" fill="${INK}" opacity=".12"/>
   <g class="bob">
-  ${hairBack}
-  <g fill="${skin}" stroke="${sk}" stroke-width="1.2">
-    <path d="M62 226 L100 226 L98 300 L95 390 L77 390 L70 300 Z"/><path d="M100 226 L138 226 L130 300 L123 390 L105 390 L102 300 Z"/>
-    <ellipse cx="84" cy="394" rx="12" ry="6"/><ellipse cx="116" cy="394" rx="12" ry="6"/>
-    <path d="M66 86 Q52 88 50 104 L42 196 Q40 214 48 216 Q55 217 56 204 L66 118Z"/><path d="M134 86 Q148 88 150 104 L158 196 Q160 214 152 216 Q145 217 144 204 L134 118Z"/>
-    <path d="M66 86 Q100 78 134 86 L132 150 Q130 190 138 228 L62 228 Q70 190 68 150 Z"/>
-    <path d="M92 58 L92 82 L108 82 L108 58Z"/>
-    <ellipse cx="100" cy="44" rx="21" ry="24"/>
-  </g>
-  <circle cx="92" cy="44" r="2.2" fill="#1b1035"/><circle cx="108" cy="44" r="2.2" fill="#1b1035"/>
-  <circle cx="88" cy="52" r="3.5" fill="#ff6f61" opacity=".3"/><circle cx="112" cy="52" r="3.5" fill="#ff6f61" opacity=".3"/>
-  <path d="M93 54 Q100 60 107 54" fill="none" stroke="#1b1035" stroke-width="1.6" stroke-linecap="round"/>
-  ${fem ? '<path d="M88 40 l-3 -2 M112 40 l3 -2" stroke="#1b1035" stroke-width="1.2"/>' : ''}
-  ${hairFront}
+  <g transform="${HEAD_T}"><g ${clip}>${hairBack}</g></g>
+  <g fill="${INK}" stroke="${INK}" stroke-width="2.8" stroke-linejoin="round">${shapes}</g>
+  <g fill="${skin}" stroke="${skin}" stroke-width=".8" stroke-linejoin="round">${shapes}</g>
+  <path d="M90 60 L89.4 82 Q100 92 110.6 82 L110 60Z" fill="${INK}"/>
+  ${under}
   ${clothes}
+  <g transform="${HEAD_T}">
+  <g fill="${INK}" stroke="${INK}" stroke-width="2.8" stroke-linejoin="round">${headShapes}</g>
+  <g fill="${skin}" stroke="${skin}" stroke-width=".8" stroke-linejoin="round">${headShapes}</g>
+  <ellipse cx="72.5" cy="45.5" rx="2.8" ry="3.4" fill="#f7a893" opacity=".75"/><ellipse cx="127.5" cy="45.5" rx="2.8" ry="3.4" fill="#f7a893" opacity=".75"/>
+  <path d="M71.5 47 Q75 45 76 48.5 Q75 52.5 71.5 52 M128.5 47 Q125 45 124 48.5 Q125 52.5 128.5 52" fill="none" stroke="${INK}" stroke-width=".9" stroke-linecap="round"/>
+  ${blush(86.5)}${blush(113.5)}
+  <ellipse cx="89.5" cy="46.5" rx="3.1" ry="5.3" fill="${INK}"/><ellipse cx="110.5" cy="46.5" rx="3.1" ry="5.3" fill="${INK}"/>
+  <ellipse cx="90.4" cy="36.2" rx="3.1" ry="2" fill="${INK}"/><ellipse cx="109.6" cy="36.2" rx="3.1" ry="2" fill="${INK}"/>
+  <ellipse cx="99.8" cy="51.9" rx="2.1" ry="1.7" fill="#f7a98f" opacity=".85"/><path d="M98.2 55.2 l1.4 1.6" stroke="${INK}" stroke-width=".7" stroke-linecap="round" opacity=".7"/>
+  <path d="M94.5 61.2 Q100.5 66 106.2 60.4" fill="none" stroke="${INK}" stroke-width="1.5" stroke-linecap="round"/>
+  ${fem ? `<path d="M86.6 42 l-3 -2 M113.4 42 l3 -2" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/>` : ''}
+  <g ${clip}>${hairFront}</g>
+  <g transform="translate(100 36) scale(1.12) translate(-100 -36)">${headWear}</g>
+  </g>
   </g></svg>`;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useFlip } from './flip.js';
-import { GARMENTS, COLORS, PATTERNS, DESIGNS, SLOTS, SKINS, HAIRS, thumbSVG, figureSVG, garmentById, slotOf } from './wardrobe.js';
+import { GARMENTS, COLORS, PATTERNS, DESIGNS, SLOTS, SKINS, HAIRS, HAIR_STYLES, thumbSVG, figureSVG, garmentById, slotOf } from './wardrobe.js';
 import { DAYS, dayDate, fmtDate } from './lib.js';
 import { useApp } from './ctx.js';
 import { DayStrip } from './Itinerary.jsx';
@@ -64,7 +64,7 @@ export default function Wardrobe() {
 
   // prenda con los ajustes actuales del editor (ww = ajustes ya modificados en este mismo evento)
   const itemFor = (g, ww = w) => {
-    const it = { g: g.id, c: ww.wColor, p: ww.wPattern };
+    const it = { g: g.id, c: ww.wColor, p: PATTERN_SLOTS.includes(g.slot) ? ww.wPattern : 'solid' }; // calzado, gafas y extras no llevan estampado
     if (g.pr && ww.wDesign !== 'none') Object.assign(it, { d: ww.wDesign, t: ww.wText.slice(0, 40) }, ww.wPrint ? { pc: ww.wPrint } : {});
     return it;
   };
@@ -189,6 +189,7 @@ export default function Wardrobe() {
     <div className="me-panel">
       <div className="prow"><span>Figura</span><button className={profile.figure !== 'f' ? 'on' : ''} onClick={() => { patchW({ wGender: 'm' }); setProfile({ figure: 'm' }); }}>🙋‍♂️ Él</button><button className={profile.figure === 'f' ? 'on' : ''} onClick={() => { patchW({ wGender: 'f' }); setProfile({ figure: 'f' }); }}>🙋‍♀️ Ella</button></div>
       <div className="prow"><span>Piel</span>{SKINS.map((s) => <button key={s} className={`sw ${profile.skin === s ? 'on' : ''}`} style={{ '--c': s }} onClick={() => setProfile({ skin: s })} aria-label="Tono de piel"></button>)}</div>
+      <div className="prow"><span>Peinado</span>{HAIR_STYLES.map(([k, n]) => <button key={k} className={(profile.style || (profile.figure === 'f' ? 'long' : 'curly')) === k ? 'on' : ''} onClick={() => setProfile({ style: k })}>{n}</button>)}</div>
       <div className="prow"><span>Pelo</span>{HAIRS.map((s) => <button key={s} className={`sw ${profile.hair === s ? 'on' : ''}`} style={{ '--c': s }} onClick={() => setProfile({ hair: s })} aria-label="Color de pelo"></button>)}</div>
       <div className="prow"><span>Mis colores</span>{profile.custom.length ? profile.custom.map((c) => <span key={c} className="mycolor" style={{ '--c': c }}>{c}<button onClick={() => setProfile({ custom: profile.custom.filter((x) => x !== c) })} aria-label="Borrar color">✕</button></span>) : <em className="muted">Crea colores con el botón ＋ en la paleta.</em>}</div>
     </div>
